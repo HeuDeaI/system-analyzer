@@ -11,9 +11,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// NewMemoryPanel создает и возвращает панель для тестирования подсистемы памяти.
 func NewMemoryPanel() fyne.CanvasObject {
+	// Количество итераций для каждого теста.
 	const iterations = 3
 
+	// Слайс, определяющий тесты задержки памяти.
 	tests := []struct {
 		name        string
 		description string
@@ -26,6 +29,7 @@ func NewMemoryPanel() fyne.CanvasObject {
 		{"🏃 Задержка ОЗУ", "Измеряет время доступа к основной оперативной памяти (RAM).", memory.RAMLatencyBenchmark, widget.NewLabel("Результат: ...")},
 	}
 
+	// Слайс, определяющий тесты флеш-памяти (SSD/HDD).
 	flashTests := []struct {
 		name        string
 		description string
@@ -37,9 +41,11 @@ func NewMemoryPanel() fyne.CanvasObject {
 		{"🎲 Случайное чтение с флеш-памяти", "Тестирует скорость чтения случайных блоков данных из файла.", memory.FlashRandomReadSpeedBenchmark, widget.NewLabel("Результат: ...")},
 	}
 
+	// Создаем виджеты для отображения прогресса и запуска тестов.
 	progressBar := widget.NewProgressBar()
 	startButton := widget.NewButton("Запустить все тесты", nil)
 
+	// Создаем вертикальный контейнер для карточек с тестами.
 	content := container.NewVBox()
 	for _, t := range tests {
 		content.Add(widget.NewCard(t.name, t.description, t.resultLabel))
@@ -48,11 +54,15 @@ func NewMemoryPanel() fyne.CanvasObject {
 		content.Add(widget.NewCard(t.name, t.description, t.resultLabel))
 	}
 
+	// Определяем действие при нажатии на кнопку "Запустить все тесты".
 	startButton.OnTapped = func() {
+		// Запускаем тесты в отдельной горутине, чтобы не блокировать UI.
 		go func() {
+			// Блокируем кнопку на время выполнения тестов.
 			startButton.Disable()
 			defer startButton.Enable()
 
+			// Канал для отслеживания общего прогресса.
 			progressChan := make(chan float64)
 			go func() {
 				for p := range progressChan {
@@ -63,6 +73,7 @@ func NewMemoryPanel() fyne.CanvasObject {
 			totalProgress := 0.0
 			numTests := float64(len(tests) + len(flashTests))
 
+			// Последовательно выполняем тесты задержки.
 			for _, t := range tests {
 				t.resultLabel.SetText("Выполняется...")
 				individualProgress := make(chan float64)
@@ -78,7 +89,7 @@ func NewMemoryPanel() fyne.CanvasObject {
 				totalProgress++
 			}
 
-			// Тесты флеш-памяти
+			// Создаем временный файл для тестов флеш-памяти.
 			testFile, err := memory.CreateTestFile()
 			if err != nil {
 				log.Println("Failed to create test file:", err)
@@ -86,8 +97,10 @@ func NewMemoryPanel() fyne.CanvasObject {
 			}
 			defer memory.CleanupTestFile(testFile)
 
+			// Последовательно выполняем тесты флеш-памяти.
 			for _, t := range flashTests {
 				t.resultLabel.SetText("Выполняется...")
+				// Создаем обертку, так как функция теста флеш-памяти имеет другую сигнатуру.
 				flashFn := func() (float64, string) {
 					val, unit, err := t.fn(testFile)
 					if err != nil {
@@ -109,10 +122,11 @@ func NewMemoryPanel() fyne.CanvasObject {
 			}
 
 			close(progressChan)
-			progressBar.SetValue(1.0)
+			progressBar.SetValue(1.0) // Устанавливаем прогресс в 100% по завершении.
 		}()
 	}
 
+	// Возвращаем контейнер с прокруткой, содержащий все элементы панели.
 	return container.NewScroll(container.NewVBox(
 		startButton,
 		progressBar,

@@ -12,6 +12,7 @@ import (
 )
 
 // NewDashboardPanel создает и возвращает панель мониторинга.
+// Панель отображает системную информацию в реальном времени.
 func NewDashboardPanel() fyne.CanvasObject {
 	// Labels for dynamic data
 	cpuInfoLabel := widget.NewLabel("...")
@@ -29,21 +30,25 @@ func NewDashboardPanel() fyne.CanvasObject {
 	netCard := widget.NewCard("🌐 Сеть", "", netIOLabel)
 	sysCard := widget.NewCard("🖥️ Система", "", container.NewVBox(hostLabel, loadLabel))
 
-	// Core usage bars
+	// Контейнер и карточка для отображения загрузки ядер ЦП.
 	coreUsageContainer := container.NewVBox()
 	coreUsageCard := widget.NewCard("Загрузка ядер ЦП", "", coreUsageContainer)
-	var coreBars []*widget.ProgressBar
-	var coreLabels []*widget.Label
+	var coreBars []*widget.ProgressBar // Слайсы для хранения виджетов прогресс-баров.
+	var coreLabels []*widget.Label     // Слайсы для хранения меток ядер.
 
-	// Get core types once
+	// Получаем информацию о типах ядер (P-cores и E-cores) один раз при создании панели.
 	pCores, _, err := profiling.GetCoreTypes()
 	if err != nil {
+		// Если получить информацию не удалось (например, на ОС, отличной от macOS),
+		// логируем ошибку и отключаем отображение типов ядер.
 		log.Println("Could not get core types:", err)
-		pCores = -1 // Disable core type display
+		pCores = -1
 	}
 
+	// Запускаем фоновую горутину для периодического обновления данных.
 	go func() {
 		for {
+			// Обновляем данные каждые 500 миллисекунд.
 			time.Sleep(500 * time.Millisecond)
 			cpuInfo, _ := profiling.GetCPUInfo()
 			memUsage, _ := profiling.GetMemoryUsage()
@@ -63,7 +68,7 @@ func NewDashboardPanel() fyne.CanvasObject {
 			loadLabel.SetText(fmt.Sprintf("Средняя нагрузка: %s", load))
 			diskUsageLabel.SetText(diskUsage)
 
-			// Update core usage bars
+			// Динамически обновляем количество прогресс-баров в соответствии с количеством ядер.
 			if len(coreBars) != len(cpuUsage) {
 				coreUsageContainer.RemoveAll()
 				coreBars = nil
@@ -94,7 +99,8 @@ func NewDashboardPanel() fyne.CanvasObject {
 		}
 	}()
 
-	// Layout
+	// Собираем макет панели: сетка с информационными карточками и карточка с загрузкой ядер.
+	// Все оборачивается в Scroll контейнер для возможности прокрутки.
 	grid := container.NewGridWithColumns(2, cpuCard, memCard, diskCard, netCard, sysCard)
 	return container.NewScroll(container.NewVBox(grid, coreUsageCard))
 }

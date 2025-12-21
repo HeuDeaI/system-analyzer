@@ -1,0 +1,176 @@
+\section*{Приложение А. Листинг основного файла main.go}
+\addcontentsline{toc}{section}{Приложение А. Листинг основного файла main.go}
+
+В данном приложении представлен исходный код основного файла программы \texttt{main.go}, который является точкой входа в приложение и отвечает за инициализацию графического интерфейса и его компонентов.
+
+\begin{lstlisting}[language=Go, caption={Исходный код файла cmd/analyzer/main.go}]
+package main
+
+import (
+	"system-analyzer/pkg/gui"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+)
+
+// main является точкой входа в приложение.
+func main() {
+	// Создаем новое приложение Fyne.
+	a := app.New()
+	// Создаем главное окно приложения с заголовком.
+	w := a.NewWindow("Анализатор Производительности Системы")
+
+	// Создаем контейнер с вкладками для различных панелей.
+	tabs := container.NewAppTabs(
+		// Вкладка "Мониторинг" для отображения системной информации в реальном времени.
+		container.NewTabItem("📊 Мониторинг", gui.NewDashboardPanel()),
+		// Вкладка "Производительность" для тестов процессора и пропускной способности ОЗУ.
+		container.NewTabItem("🚀 Производительность", gui.NewBenchmarkPanel()),
+		// Вкладка "Память" для тестов задержки кэшей, ОЗУ и скорости флеш-накопителей.
+		container.NewTabItem("💾 Память", gui.NewMemoryPanel()),
+		// Вкладка "Многозадачность" для тестов производительности горутин, каналов и мьютексов.
+		container.NewTabItem("🔀 Многозадачность", gui.NewConcurrencyPanel()),
+	)
+
+	// Устанавливаем контейнер с вкладками как основное содержимое окна.
+	w.SetContent(tabs)
+	// Устанавливаем начальный размер окна.
+	w.Resize(fyne.NewSize(800, 600))
+	// Центрируем окно на экране.
+	w.CenterOnScreen()
+	// Отображаем окно и запускаем главный цикл приложения.
+	w.ShowAndRun()
+}
+\end{lstlisting}
+
+\newpage
+\section*{Приложение Б. Листинг обработчика тестов runner.go}
+\addcontentsline{toc}{section}{Приложение Б. Листинг обработчика тестов runner.go}
+
+\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/benchmark/runner.go}]
+package benchmark
+
+import (
+	"fmt"
+)
+
+// ... (определения структур BenchmarkStats и Result)
+
+type BenchmarkFunc func() (float64, string)
+
+func TestRunner(fn BenchmarkFunc, iterations int, progress chan<- float64) BenchmarkStats {
+	results := make([]float64, iterations)
+	var unit string
+
+	for i := 0; i < iterations; i++ {
+		val, u := fn()
+		results[i] = val
+		unit = u
+		if progress != nil {
+			progress <- float64(i+1) / float64(iterations)
+		}
+	}
+
+	var sum, min, max float64
+	min = results[0]
+	max = results[0]
+	for _, v := range results {
+		sum += v
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+
+	return BenchmarkStats{
+		Min:  min,
+		Max:  max,
+		Avg:  sum / float64(iterations),
+		Unit: unit,
+	}
+}
+\end{lstlisting}
+
+\newpage
+\section*{Приложение В. Листинг теста задержки памяти latency.go}
+\addcontentsline{toc}{section}{Приложение В. Листинг теста задержки памяти latency.go}
+
+\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/memory/latency.go}]
+package memory
+
+import (
+	"math/rand"
+	"runtime"
+	"sort"
+	"time"
+	"unsafe"
+)
+
+type node struct {
+	next *node
+}
+
+func makeRandomList(size int) *node {
+	// ... (реализация создания списка)
+}
+
+func chase(start *node, steps int) *node {
+	// ... (реализация "погони за указателями")
+}
+
+func measure(sizeBytes int, steps int, repeats int) float64 {
+	// ... (реализация измерений)
+}
+
+func runLatencyTest(sizeBytes int) (float64, string) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	steps := 5_000_000
+	repeats := 3
+
+	ns := measure(sizeBytes, steps, repeats)
+	return ns, "ns/доступ"
+}
+
+func L1CacheLatencyBenchmark() (float64, string) {
+	return runLatencyTest(64 * 1024) // 64 KB
+}
+
+// ... (аналогично для L2, L3, RAM)
+
+\end{lstlisting}
+
+\newpage
+\section*{Приложение Г. Листинг теста горутин goroutines.go}
+\addcontentsline{toc}{section}{Приложение Г. Листинг теста горутин goroutines.go}
+
+\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/concurrency/goroutines.go}]
+package concurrency
+
+import (
+	"sync"
+	"time"
+)
+
+const numGoroutines = 20000
+
+func GoroutineOverheadBenchmark() (float64, string) {
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	start := time.Now()
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	elapsed := time.Since(start)
+
+	return float64(elapsed.Nanoseconds()) / float64(numGoroutines), "ns/op"
+}
+\end{lstlisting}
