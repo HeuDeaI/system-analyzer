@@ -1,5 +1,6 @@
-\section*{Приложение А. Листинг основного файла main.go}
-\addcontentsline{toc}{section}{Приложение А. Листинг основного файла main.go}
+\chapter*{Приложение А. Листинг основного файла main.go}
+\addcontentsline{toc}{chapter}{Приложение А. Листинг основного файла main.go}
+\markboth{Приложение А. Листинг основного файла main.go}{}
 
 В данном приложении представлен исходный код основного файла программы \texttt{main.go}, который является точкой входа в приложение и отвечает за инициализацию графического интерфейса и его компонентов.
 
@@ -24,13 +25,13 @@ func main() {
 	// Создаем контейнер с вкладками для различных панелей.
 	tabs := container.NewAppTabs(
 		// Вкладка "Мониторинг" для отображения системной информации в реальном времени.
-		container.NewTabItem("📊 Мониторинг", gui.NewDashboardPanel()),
+		container.NewTabItem("Мониторинг", gui.NewDashboardPanel()),
 		// Вкладка "Производительность" для тестов процессора и пропускной способности ОЗУ.
-		container.NewTabItem("🚀 Производительность", gui.NewBenchmarkPanel()),
+		container.NewTabItem("Производительность", gui.NewBenchmarkPanel()),
 		// Вкладка "Память" для тестов задержки кэшей, ОЗУ и скорости флеш-накопителей.
-		container.NewTabItem("💾 Память", gui.NewMemoryPanel()),
+		container.NewTabItem("Память", gui.NewMemoryPanel()),
 		// Вкладка "Многозадачность" для тестов производительности горутин, каналов и мьютексов.
-		container.NewTabItem("🔀 Многозадачность", gui.NewConcurrencyPanel()),
+		container.NewTabItem("Многозадачность", gui.NewConcurrencyPanel()),
 	)
 
 	// Устанавливаем контейнер с вкладками как основное содержимое окна.
@@ -45,8 +46,9 @@ func main() {
 \end{lstlisting}
 
 \newpage
-\section*{Приложение Б. Листинг обработчика тестов runner.go}
-\addcontentsline{toc}{section}{Приложение Б. Листинг обработчика тестов runner.go}
+\chapter*{Приложение Б. Листинг обработчика тестов runner.go}
+\addcontentsline{toc}{chapter}{Приложение Б. Листинг обработчика тестов runner.go}
+\markboth{Приложение Б. Листинг обработчика тестов runner.go}{}
 
 \begin{lstlisting}[language=Go, caption={Исходный код файла pkg/benchmark/runner.go}]
 package benchmark
@@ -95,8 +97,9 @@ func TestRunner(fn BenchmarkFunc, iterations int, progress chan<- float64) Bench
 \end{lstlisting}
 
 \newpage
-\section*{Приложение В. Листинг теста задержки памяти latency.go}
-\addcontentsline{toc}{section}{Приложение В. Листинг теста задержки памяти latency.go}
+\chapter*{Приложение В. Листинг теста задержки памяти latency.go}
+\addcontentsline{toc}{chapter}{Приложение В. Листинг теста задержки памяти latency.go}
+\markboth{Приложение В. Листинг теста задержки памяти latency.go}{}
 
 \begin{lstlisting}[language=Go, caption={Исходный код файла pkg/memory/latency.go}]
 package memory
@@ -145,8 +148,9 @@ func L1CacheLatencyBenchmark() (float64, string) {
 \end{lstlisting}
 
 \newpage
-\section*{Приложение Г. Листинг теста горутин goroutines.go}
-\addcontentsline{toc}{section}{Приложение Г. Листинг теста горутин goroutines.go}
+\chapter*{Приложение Г. Листинг теста горутин goroutines.go}
+\addcontentsline{toc}{chapter}{Приложение Г. Листинг теста горутин goroutines.go}
+\markboth{Приложение Г. Листинг теста горутин goroutines.go}{}
 
 \begin{lstlisting}[language=Go, caption={Исходный код файла pkg/concurrency/goroutines.go}]
 package concurrency

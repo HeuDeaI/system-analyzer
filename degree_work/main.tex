@@ -4,6 +4,7 @@
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
+\usepackage{microtype}
 \usepackage{amsmath, amsfonts, amssymb, amsthm, mathtools}
 \usepackage{geometry} % Для управления полями
 \usepackage{setspace} % Для межстрочного интервала
@@ -135,20 +136,15 @@
 % --- Разделы работы ---
 \input{introduction.tex} % Введение
 
-\chapter{Теоретические основы и анализ предметной области}
 \input{chapter1.tex}
 
-\chapter{Проектирование комплекса средств анализа вычислительных возможностей}
 \input{chapter2.tex}
 
-\chapter{Реализация и тестирование программного комплекса}
 \input{chapter3.tex}
 
 \input{conclusion.tex}   % Заключение
 
 \newpage
-% --- Список литературы ---
-\addcontentsline{toc}{section}{Список использованных источников}
 \input{references.tex}
 
 \newpage

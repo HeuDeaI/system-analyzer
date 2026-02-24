@@ -24,11 +24,11 @@ func NewDashboardPanel() fyne.CanvasObject {
 	diskUsageLabel := widget.NewLabel("...")
 
 	// Cards for grouping information
-	cpuCard := widget.NewCard("⚙️ Процессор", "", cpuInfoLabel)
-	memCard := widget.NewCard("📚 ОЗУ", "", memUsageLabel)
-	diskCard := widget.NewCard("💾 Диск", "", container.NewVBox(diskUsageLabel, diskIOLabel))
-	netCard := widget.NewCard("🌐 Сеть", "", netIOLabel)
-	sysCard := widget.NewCard("🖥️ Система", "", container.NewVBox(hostLabel, loadLabel))
+	cpuCard := widget.NewCard("Процессор", "", cpuInfoLabel)
+	memCard := widget.NewCard("Оперативная память", "", memUsageLabel)
+	diskCard := widget.NewCard("Дисковая подсистема", "", container.NewVBox(diskUsageLabel, diskIOLabel))
+	netCard := widget.NewCard("Сетевые интерфейсы", "", netIOLabel)
+	sysCard := widget.NewCard("Системная информация", "", container.NewVBox(hostLabel, loadLabel))
 
 	// Контейнер и карточка для отображения загрузки ядер ЦП.
 	coreUsageContainer := container.NewVBox()

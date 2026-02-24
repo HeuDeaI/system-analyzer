@@ -23,10 +23,10 @@ func NewMemoryPanel() fyne.CanvasObject {
 		fn          benchmark.BenchmarkFunc
 		resultLabel *widget.Label
 	}{
-		{"💡 Задержка L1 кэша", "Измеряет время доступа к кэшу первого уровня, самой быстрой памяти процессора.", memory.L1CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
-		{"💻 Задержка L2 кэша", "Измеряет время доступа к кэшу второго уровня.", memory.L2CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
-		{"💾 Задержка L3 кэша", "Измеряет время доступа к кэшу третьего уровня, общему для всех ядер.", memory.L3CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
-		{"🏃 Задержка ОЗУ", "Измеряет время доступа к основной оперативной памяти (RAM).", memory.RAMLatencyBenchmark, widget.NewLabel("Результат: ...")},
+		{"Задержка L1 кэша", "Измерение времени доступа к кэш-памяти первого уровня (L1).", memory.L1CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
+		{"Задержка L2 кэша", "Измерение времени доступа к кэш-памяти второго уровня (L2).", memory.L2CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
+		{"Задержка L3 кэша", "Измерение времени доступа к кэш-памяти третьего уровня (L3).", memory.L3CacheLatencyBenchmark, widget.NewLabel("Результат: ...")},
+		{"Задержка ОЗУ", "Измерение времени доступа к основной оперативной памяти (DRAM).", memory.RAMLatencyBenchmark, widget.NewLabel("Результат: ...")},
 	}
 
 	// Слайс, определяющий тесты флеш-памяти (SSD/HDD).
@@ -36,9 +36,9 @@ func NewMemoryPanel() fyne.CanvasObject {
 		fn          func(string) (float64, string, error)
 		resultLabel *widget.Label
 	}{
-		{"💿 Скорость записи на флеш-память", "Тестирует скорость последовательной записи большого файла.", memory.FlashWriteSpeedBenchmark, widget.NewLabel("Результат: ...")},
-		{"📀 Скорость чтения с флеш-памяти", "Тестирует скорость последовательного чтения большого файла.", memory.FlashReadSpeedBenchmark, widget.NewLabel("Результат: ...")},
-		{"🎲 Случайное чтение с флеш-памяти", "Тестирует скорость чтения случайных блоков данных из файла.", memory.FlashRandomReadSpeedBenchmark, widget.NewLabel("Результат: ...")},
+		{"Скорость записи на накопитель", "Измерение скорости последовательной записи данных в файл.", memory.FlashWriteSpeedBenchmark, widget.NewLabel("Результат: ...")},
+		{"Скорость чтения с накопителя", "Измерение скорости последовательного чтения данных из файла.", memory.FlashReadSpeedBenchmark, widget.NewLabel("Результат: ...")},
+		{"Случайное чтение с накопителя", "Измерение скорости чтения произвольных блоков данных.", memory.FlashRandomReadSpeedBenchmark, widget.NewLabel("Результат: ...")},
 	}
 
 	// Создаем виджеты для отображения прогресса и запуска тестов.
