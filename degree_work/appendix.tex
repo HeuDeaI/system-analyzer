@@ -1,8 +1,6 @@
-\chapter*{Приложение А. Листинг основного файла main.go}
-\addcontentsline{toc}{chapter}{Приложение А. Листинг основного файла main.go}
-\markboth{Приложение А. Листинг основного файла main.go}{}
+\chapter{Листинг точки входа приложения (cmd/analyzer/main.go)}
 
-В данном приложении представлен исходный код основного файла программы \texttt{main.go}, который является точкой входа в приложение и отвечает за инициализацию графического интерфейса и его компонентов.
+В приложении ниже приведён исходный код точки входа, отвечающей за инициализацию графического интерфейса и формирование основных вкладок комплекса.
 
 \begin{lstlisting}[language=Go, caption={Исходный код файла cmd/analyzer/main.go}]
 package main
@@ -15,56 +13,68 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-// main является точкой входа в приложение.
+// main is the entry point of the application.
 func main() {
-	// Создаем новое приложение Fyne.
+	// Create a new Fyne application.
 	a := app.New()
-	// Создаем главное окно приложения с заголовком.
-	w := a.NewWindow("Анализатор Производительности Системы")
+	// Create the main application window with a title.
+	w := a.NewWindow("Системный Анализатор")
 
 	// Создаем контейнер с вкладками для различных панелей.
 	tabs := container.NewAppTabs(
-		// Вкладка "Мониторинг" для отображения системной информации в реальном времени.
-		container.NewTabItem("Мониторинг", gui.NewDashboardPanel()),
-		// Вкладка "Производительность" для тестов процессора и пропускной способности ОЗУ.
-		container.NewTabItem("Производительность", gui.NewBenchmarkPanel()),
-		// Вкладка "Память" для тестов задержки кэшей, ОЗУ и скорости флеш-накопителей.
-		container.NewTabItem("Память", gui.NewMemoryPanel()),
-		// Вкладка "Многозадачность" для тестов производительности горутин, каналов и мьютексов.
-		container.NewTabItem("Многозадачность", gui.NewConcurrencyPanel()),
+		container.NewTabItem("Мониторинг", container.NewScroll(gui.NewDashboardPanel())),
+		container.NewTabItem("Процессор", container.NewScroll(gui.NewBenchmarkPanel("Процессор"))),
+		container.NewTabItem("Память", container.NewScroll(gui.NewBenchmarkPanel("Память"))),
+		container.NewTabItem("Математика", container.NewScroll(gui.NewBenchmarkPanel("Математика"))),
+		container.NewTabItem("Криптография", container.NewScroll(gui.NewInteractiveCryptoPanel())),
 	)
 
-	// Устанавливаем контейнер с вкладками как основное содержимое окна.
+	// Set the tab container as the main window content.
 	w.SetContent(tabs)
-	// Устанавливаем начальный размер окна.
-	w.Resize(fyne.NewSize(800, 600))
-	// Центрируем окно на экране.
+	// Set window to maximum available size
+	w.Resize(fyne.NewSize(1600, 1000))
 	w.CenterOnScreen()
-	// Отображаем окно и запускаем главный цикл приложения.
 	w.ShowAndRun()
 }
 \end{lstlisting}
 
 \newpage
-\chapter*{Приложение Б. Листинг обработчика тестов runner.go}
-\addcontentsline{toc}{chapter}{Приложение Б. Листинг обработчика тестов runner.go}
-\markboth{Приложение Б. Листинг обработчика тестов runner.go}{}
+\chapter{Листинг обработчика измерений (pkg/benchmark/runner.go)}
 
-\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/benchmark/runner.go}]
+В данном приложении представлен ключевой компонент, обеспечивающий воспроизводимость результатов синтетических тестов. Функция \texttt{TestRunner} выполняет разогрев, серию итераций, фильтрацию выбросов и вычисление устойчивых статистик (медиана, MAD, коэффициент вариации).
+
+\begin{lstlisting}[language=Go, caption={Фрагмент файла pkg/benchmark/runner.go (ядро TestRunner)}]
 package benchmark
 
 import (
-	"fmt"
+	"math"
+	"sort"
 )
-
-// ... (определения структур BenchmarkStats и Result)
 
 type BenchmarkFunc func() (float64, string)
 
+type BenchmarkStats struct {
+	Min      float64
+	Max      float64
+	Avg      float64
+	Median   float64
+	Unit     string
+	StdDev   float64
+	MAD      float64
+	Variance float64
+}
+
 func TestRunner(fn BenchmarkFunc, iterations int, progress chan<- float64) BenchmarkStats {
+	if iterations < 10 {
+		iterations = 10
+	}
+
+	// Разогрев
+	_, _ = fn()
+	_, _ = fn()
+
 	results := make([]float64, iterations)
 	var unit string
-
 	for i := 0; i < iterations; i++ {
 		val, u := fn()
 		results[i] = val
@@ -74,107 +84,29 @@ func TestRunner(fn BenchmarkFunc, iterations int, progress chan<- float64) Bench
 		}
 	}
 
-	var sum, min, max float64
-	min = results[0]
-	max = results[0]
-	for _, v := range results {
+	sort.Float64s(results)
+	median := calculateMedian(results)
+	mad := calculateMAD(results, median)
+	filtered := filterOutliersIQR(results)
+
+	var sum float64
+	min := filtered[0]
+	max := filtered[len(filtered)-1]
+	for _, v := range filtered {
 		sum += v
-		if v < min {
-			min = v
-		}
-		if v > max {
-			max = v
-		}
 	}
+	avg := sum / float64(len(filtered))
+	filteredMedian := calculateMedian(filtered)
 
-	return BenchmarkStats{
-		Min:  min,
-		Max:  max,
-		Avg:  sum / float64(iterations),
-		Unit: unit,
+	var varianceSum float64
+	for _, v := range filtered {
+		diff := v - avg
+		varianceSum += diff * diff
 	}
-}
-\end{lstlisting}
+	stdDev := math.Sqrt(varianceSum / float64(len(filtered)))
+	cv := (stdDev / avg) * 100
 
-\newpage
-\chapter*{Приложение В. Листинг теста задержки памяти latency.go}
-\addcontentsline{toc}{chapter}{Приложение В. Листинг теста задержки памяти latency.go}
-\markboth{Приложение В. Листинг теста задержки памяти latency.go}{}
-
-\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/memory/latency.go}]
-package memory
-
-import (
-	"math/rand"
-	"runtime"
-	"sort"
-	"time"
-	"unsafe"
-)
-
-type node struct {
-	next *node
-}
-
-func makeRandomList(size int) *node {
-	// ... (реализация создания списка)
-}
-
-func chase(start *node, steps int) *node {
-	// ... (реализация "погони за указателями")
-}
-
-func measure(sizeBytes int, steps int, repeats int) float64 {
-	// ... (реализация измерений)
-}
-
-func runLatencyTest(sizeBytes int) (float64, string) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	steps := 5_000_000
-	repeats := 3
-
-	ns := measure(sizeBytes, steps, repeats)
-	return ns, "ns/доступ"
-}
-
-func L1CacheLatencyBenchmark() (float64, string) {
-	return runLatencyTest(64 * 1024) // 64 KB
-}
-
-// ... (аналогично для L2, L3, RAM)
-
-\end{lstlisting}
-
-\newpage
-\chapter*{Приложение Г. Листинг теста горутин goroutines.go}
-\addcontentsline{toc}{chapter}{Приложение Г. Листинг теста горутин goroutines.go}
-\markboth{Приложение Г. Листинг теста горутин goroutines.go}{}
-
-\begin{lstlisting}[language=Go, caption={Исходный код файла pkg/concurrency/goroutines.go}]
-package concurrency
-
-import (
-	"sync"
-	"time"
-)
-
-const numGoroutines = 20000
-
-func GoroutineOverheadBenchmark() (float64, string) {
-	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
-
-	start := time.Now()
-	for i := 0; i < numGoroutines; i++ {
-		go func() {
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	elapsed := time.Since(start)
-
-	return float64(elapsed.Nanoseconds()) / float64(numGoroutines), "ns/op"
+	finalResult := 0.6*filteredMedian + 0.4*avg
+	return BenchmarkStats{Min: min, Max: max, Avg: finalResult, Median: filteredMedian, Unit: unit, StdDev: stdDev, MAD: mad, Variance: cv}
 }
 \end{lstlisting}

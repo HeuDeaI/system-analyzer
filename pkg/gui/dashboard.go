@@ -2,19 +2,20 @@ package gui
 
 import (
 	"fmt"
-	"log"
 	"system-analyzer/pkg/profiling"
 	"time"
 
+	"image/color"
+
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-// NewDashboardPanel создает и возвращает панель мониторинга.
-// Панель отображает системную информацию в реальном времени.
 func NewDashboardPanel() fyne.CanvasObject {
-	// Labels for dynamic data
 	cpuInfoLabel := widget.NewLabel("...")
 	memUsageLabel := widget.NewLabel("...")
 	diskIOLabel := widget.NewLabel("...")
@@ -22,34 +23,23 @@ func NewDashboardPanel() fyne.CanvasObject {
 	hostLabel := widget.NewLabel("...")
 	loadLabel := widget.NewLabel("...")
 	diskUsageLabel := widget.NewLabel("...")
+	topProcsLabel := widget.NewLabel("...")
 
-	// Cards for grouping information
-	cpuCard := widget.NewCard("Процессор", "", cpuInfoLabel)
-	memCard := widget.NewCard("Оперативная память", "", memUsageLabel)
-	diskCard := widget.NewCard("Дисковая подсистема", "", container.NewVBox(diskUsageLabel, diskIOLabel))
-	netCard := widget.NewCard("Сетевые интерфейсы", "", netIOLabel)
-	sysCard := widget.NewCard("Системная информация", "", container.NewVBox(hostLabel, loadLabel))
+	cpuInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	memUsageLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	diskIOLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	netIOLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	hostLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	loadLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	diskUsageLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	topProcsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Контейнер и карточка для отображения загрузки ядер ЦП.
 	coreUsageContainer := container.NewVBox()
-	coreUsageCard := widget.NewCard("Загрузка ядер ЦП", "", coreUsageContainer)
-	var coreBars []*widget.ProgressBar // Слайсы для хранения виджетов прогресс-баров.
-	var coreLabels []*widget.Label     // Слайсы для хранения меток ядер.
+	var coreBars []*widget.ProgressBar
 
-	// Получаем информацию о типах ядер (P-cores и E-cores) один раз при создании панели.
-	pCores, _, err := profiling.GetCoreTypes()
-	if err != nil {
-		// Если получить информацию не удалось (например, на ОС, отличной от macOS),
-		// логируем ошибку и отключаем отображение типов ядер.
-		log.Println("Could not get core types:", err)
-		pCores = -1
-	}
-
-	// Запускаем фоновую горутину для периодического обновления данных.
 	go func() {
 		for {
-			// Обновляем данные каждые 500 миллисекунд.
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 			cpuInfo, _ := profiling.GetCPUInfo()
 			memUsage, _ := profiling.GetMemoryUsage()
 			cpuUsage, _ := profiling.GetCPUUsage()
@@ -58,37 +48,24 @@ func NewDashboardPanel() fyne.CanvasObject {
 			host, _ := profiling.GetHostInfo()
 			load, _ := profiling.GetLoadAvg()
 			diskUsage, _ := profiling.GetDiskUsage()
+			procs, _ := profiling.GetTopProcesses(5)
 
-			// Update labels
 			cpuInfoLabel.SetText(cpuInfo)
 			memUsageLabel.SetText(memUsage)
-			diskIOLabel.SetText(fmt.Sprintf("Скорость: %s", diskIO))
-			netIOLabel.SetText(fmt.Sprintf("Скорость: %s", netIO))
+			diskIOLabel.SetText(diskIO)
+			netIOLabel.SetText(netIO)
 			hostLabel.SetText(host)
-			loadLabel.SetText(fmt.Sprintf("Средняя нагрузка: %s", load))
+			loadLabel.SetText(load)
 			diskUsageLabel.SetText(diskUsage)
+			topProcsLabel.SetText(profiling.FormatProcessList(procs))
 
-			// Динамически обновляем количество прогресс-баров в соответствии с количеством ядер.
 			if len(coreBars) != len(cpuUsage) {
 				coreUsageContainer.RemoveAll()
 				coreBars = nil
-				coreLabels = nil
 				for i := 0; i < len(cpuUsage); i++ {
 					bar := widget.NewProgressBar()
-					var label *widget.Label
-					if pCores != -1 {
-						if i < pCores {
-							label = widget.NewLabel(fmt.Sprintf("Ядро %d (Производительное):", i+1))
-						} else {
-							label = widget.NewLabel(fmt.Sprintf("Ядро %d (Энергосберегающее):", i+1))
-						}
-					} else {
-						label = widget.NewLabel(fmt.Sprintf("Ядро %d:", i+1))
-					}
-					coreUsageContainer.Add(label)
-					coreUsageContainer.Add(bar)
 					coreBars = append(coreBars, bar)
-					coreLabels = append(coreLabels, label)
+					coreUsageContainer.Add(container.NewBorder(nil, nil, widget.NewLabel(fmt.Sprintf("Ядро %d", i+1)), nil, bar))
 				}
 			}
 			for i, p := range cpuUsage {
@@ -99,8 +76,35 @@ func NewDashboardPanel() fyne.CanvasObject {
 		}
 	}()
 
-	// Собираем макет панели: сетка с информационными карточками и карточка с загрузкой ядер.
-	// Все оборачивается в Scroll контейнер для возможности прокрутки.
-	grid := container.NewGridWithColumns(2, cpuCard, memCard, diskCard, netCard, sysCard)
-	return container.NewScroll(container.NewVBox(grid, coreUsageCard))
+	sysGrid := container.New(layout.NewGridLayout(2),
+		createStatCard("Система", hostLabel),
+		createStatCard("Средняя нагрузка", loadLabel),
+		createStatCard("Процессор", cpuInfoLabel),
+		createStatCard("Оперативная память", memUsageLabel),
+		createStatCard("Дисковое пространство", diskUsageLabel),
+		createStatCard("Дисковые операции", diskIOLabel),
+		createStatCard("Сетевые операции", netIOLabel),
+	)
+
+	return container.NewPadded(container.NewVBox(
+		canvas.NewText("Системная телеметрия", theme.ForegroundColor()),
+		widget.NewSeparator(),
+		sysGrid,
+		widget.NewSeparator(),
+		canvas.NewText("Загрузка ядер", theme.ForegroundColor()),
+		coreUsageContainer,
+		widget.NewSeparator(),
+		canvas.NewText("Топ-5 процессов по ЦП", theme.ForegroundColor()),
+		container.NewPadded(topProcsLabel),
+	))
+}
+
+func createStatCard(title string, content fyne.CanvasObject) fyne.CanvasObject {
+	t := canvas.NewText(title, theme.PrimaryColor())
+	t.TextSize = 12
+	t.TextStyle = fyne.TextStyle{Bold: true}
+	bg := canvas.NewRectangle(color.Transparent)
+	bg.StrokeColor = theme.DisabledColor()
+	bg.StrokeWidth = 1
+	return container.NewStack(bg, container.NewPadded(container.NewVBox(t, content)))
 }

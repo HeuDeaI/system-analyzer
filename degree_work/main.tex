@@ -15,6 +15,12 @@
 \usepackage{hyphenat}   % Для переносов
 \usepackage{xcolor}     % Для цветов
 
+% --- Мягкая типографика для стабильной сборки ---
+\emergencystretch=2em
+\Urlmuskip=0mu plus 1mu
+\hbadness=10000
+\vbadness=10000
+
 % --- Настройка полей ---
 \geometry{
     left=3cm,   % Левое поле
@@ -136,11 +142,13 @@
 % --- Разделы работы ---
 \input{introduction.tex} % Введение
 
+\input{chapter_analogs.tex}
+
 \input{chapter1.tex}
 
 \input{chapter2.tex}
 
-\input{chapter3.tex}
+\input{chapter_experiments.tex}
 
 \input{conclusion.tex}   % Заключение
 

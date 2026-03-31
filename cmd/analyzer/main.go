@@ -8,31 +8,26 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-// main является точкой входа в приложение.
+// main is the entry point of the application.
 func main() {
-	// Создаем новое приложение Fyne.
+	// Create a new Fyne application.
 	a := app.New()
-	// Создаем главное окно приложения с заголовком.
-	w := a.NewWindow("Анализатор Производительности Системы")
+	// Create the main application window with a title.
+	w := a.NewWindow("Системный Анализатор")
 
 	// Создаем контейнер с вкладками для различных панелей.
 	tabs := container.NewAppTabs(
-		// Вкладка "Мониторинг" для отображения системной информации в реальном времени.
-		container.NewTabItem("📊 Мониторинг", gui.NewDashboardPanel()),
-		// Вкладка "Производительность" для тестов процессора и пропускной способности ОЗУ.
-		container.NewTabItem("🚀 Производительность", gui.NewBenchmarkPanel()),
-		// Вкладка "Память" для тестов задержки кэшей, ОЗУ и скорости флеш-накопителей.
-		container.NewTabItem("💾 Память", gui.NewMemoryPanel()),
-		// Вкладка "Многозадачность" для тестов производительности горутин, каналов и мьютексов.
-		container.NewTabItem("🔀 Многозадачность", gui.NewConcurrencyPanel()),
+		container.NewTabItem("Мониторинг", container.NewScroll(gui.NewDashboardPanel())),
+		container.NewTabItem("Процессор", container.NewScroll(gui.NewBenchmarkPanel("Процессор"))),
+		container.NewTabItem("Память", container.NewScroll(gui.NewBenchmarkPanel("Память"))),
+		container.NewTabItem("Математика", container.NewScroll(gui.NewBenchmarkPanel("Математика"))),
+		container.NewTabItem("Криптография", container.NewScroll(gui.NewInteractiveCryptoPanel())),
 	)
 
-	// Устанавливаем контейнер с вкладками как основное содержимое окна.
+	// Set the tab container as the main window content.
 	w.SetContent(tabs)
-	// Устанавливаем начальный размер окна.
-	w.Resize(fyne.NewSize(1280, 960))
-	// Центрируем окно на экране.
+	// Set window to maximum available size
+	w.Resize(fyne.NewSize(1600, 1000))
 	w.CenterOnScreen()
-	// Отображаем окно и запускаем главный цикл приложения.
 	w.ShowAndRun()
 }

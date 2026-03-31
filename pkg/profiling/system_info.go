@@ -91,7 +91,7 @@ func GetNetIO() (string, error) {
 	recvSpeed := float64(currentIO.BytesRecv-lastNetIO.BytesRecv) / duration / (1024 * 1024)
 	lastNetIO = currentIO
 	lastTime = now
-	return fmt.Sprintf("Получение: %.2f МБ/с / Отправка: %.2f МБ/с", recvSpeed, sentSpeed), nil
+	return fmt.Sprintf("Получено: %.2f МБ/с / Отправлено: %.2f МБ/с", recvSpeed, sentSpeed), nil
 }
 
 func GetHostInfo() (string, error) {
